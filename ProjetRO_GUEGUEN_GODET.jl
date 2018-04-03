@@ -28,7 +28,7 @@ function returnTranslation(m::JuMP.Model)
 	return translations
 end
 
-#=TODO : pas de fonction findIndex retournant l'index d'un element dans une liste, il faut la faire nous même pour la ligne 55=#
+#= fonction findIndex retournant l'index d'un element dans une liste=#
 function findIndice(a::Array{Int}, b::Int)
 	for i in 1:length(a)
 		if a[i] == b
@@ -78,6 +78,30 @@ function findCycle(translation::Array{Int})
 end
 
 
+#= procedure de destruction de sous cycle =#
+#= TODO: verifier le fonctionnement =#
+procedure ajoutContrainte(Contraintes::Array{Array{Int}}, m::JuMP.Model)
+	
+	for n in 1:length(Contraintes)
+	
+		min = length(Contraintes(1))
+		
+		for i in 1:length(Contraintes)
+	
+			if (min > length(Contraintes(i)))
+				min = i
+			end
+		end
+		
+		for i in 1:length(Contraintes(min))
+			@constraint(m, contrainteSousBoucle[n], sum(x[Contraintes(min, i), Contraintes(min, j)] for j in 1:length(Contraintes(min))
+					if j!=i) <= length(Contraintes(min))-1
+		end
+	end
+		
+end
+
+
 #=
    .
    .
@@ -85,7 +109,7 @@ end
 =#
 
 
-# Fonction de résolution exacte du problème de voyageur de commerce, dont le distancier est passé en paramètre
+# Fonction de résolution exacte du problème de voyageur de commerce, dont le distancier est passé en paramètre=#
 
 function TSP(C::Array{Int,2})
 
