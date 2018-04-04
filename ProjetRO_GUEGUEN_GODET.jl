@@ -37,6 +37,7 @@ function findIndice(a::Array{Int}, b::Int)
 	end
 end
 
+
 function findCycle(translation::Array{Int})
 
 	#= Truc à return =#
@@ -80,28 +81,24 @@ end
 
 #= procedure de destruction de sous cycle =#
 #= TODO: verifier le fonctionnement =#
-procedure ajoutContrainte(Contraintes::Array{Array{Int}}, m::JuMP.Model)
+function ajoutContrainte(Contraintes::Array{Array{Int}}, m::JuMP.Model)
 
-	for n in 1:length(Contraintes)
-
-		min = length(Contraintes(1))
+		min = length(Contraintes[1])
+    x = m[:x]
 
 		for i in 1:length(Contraintes)
-
-			if (min > length(Contraintes(i)))
-				min = length(Contraintes(i))
+			if (min > length(Contraintes[i]))
+				min = i
 			end
 		end
 
-		for i in 1:length(Contraintes(min))
-			@constraint(m, contrainteSousBoucle[n], sum(x[Contraintes(min, i), Contraintes(min, j)] for j in 1:length(Contraintes(min))
-					if j!=i) <= length(Contraintes(min))-1
-		end
+    cycleFound = Contraintes[min]
 
-		!push(Contraintes, Contraintes(min))
-	end
+    cons = @constraint(m,sum(x[cycleFound[i],cycleFound[(i+1) mod length(cycleFound)]] for i in 1:length(cycleFound)) <= 1)
 
+    return 2
 end
+
 
 
 #=
@@ -198,16 +195,18 @@ end
 
 m = TSP(parseTSP("plat/exemple.dat"))
 
-println(typeof(m))
+
 status = solve(m)
-#=
-t = analyseSolution(m);
-while(t == 0) {
-	@constraint(m, );
+
+t = findCycle(returnTranslation(m))
+i = length(t)
+
+while i > 1 && status == :Optimal
+	status = ajoutContrainte(t, m)
 	solve(m);
-	t = analyseSolution(m);
-}
-=#
+	t = findCycle(returnTranslation(m))
+  i = length(t)
+end
 
 
 
