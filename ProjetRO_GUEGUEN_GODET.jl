@@ -14,9 +14,9 @@ end
 function returnTranslation(m::JuMP.Model)
 	t = getvalue(m[:x])
 	n = length(t[1,:])
-	
+
 	translations = Array{Int}(n)
-	
+
 	for i in 1:n
 		for j in 1:n
 			if (t[i,j] == 1)
@@ -24,7 +24,7 @@ function returnTranslation(m::JuMP.Model)
 			end
 		end
 	end
-	
+
 	return translations
 end
 
@@ -38,42 +38,42 @@ function findIndice(a::Array{Int}, b::Int)
 end
 
 function findCycle(translation::Array{Int})
-	
+
 	#= Truc à return =#
 	cycles = Array{Array{Int}}(0)
-	
+
 	#= Ce tableau sert à stocker les indices des noeuds qui n'ont pas encore été gérés... =#
 	indices = Array{Int}(length(translation))
-	
+
 	#= ...il est donc complet au début =#
 	for i in 1:length(translation)
 		indices[i] = i
 	end
-	
+
 	#= Création des cycles =#
 	while(length(indices) != 0)
 		cycleFind = false
 		listeToAdd = Array{Int}(0)
-		
+
 		NoeudEnCours = translation[indices[1]]
 		while(cycleFind == false)
 			push!(listeToAdd, NoeudEnCours)
-			
+
 			#= Fait un système de tapis roulant =#
 			indToDelete = findIndice(indices, NoeudEnCours)
 			deleteat!(indices,indToDelete)
-			
+
 			#= On regarde s'il y a un cycle =#
 			if(translation[NoeudEnCours] in listeToAdd)
 				cycleFind = true
 			end
-			
+
 			NoeudEnCours = translation[NoeudEnCours]
 		end
-		
+
 		push!(cycles, listeToAdd)
 	end
-	
+
 	return cycles
 end
 
@@ -81,26 +81,26 @@ end
 #= procedure de destruction de sous cycle =#
 #= TODO: verifier le fonctionnement =#
 procedure ajoutContrainte(Contraintes::Array{Array{Int}}, m::JuMP.Model)
-	
+
 	for n in 1:length(Contraintes)
-	
+
 		min = length(Contraintes(1))
-		
+
 		for i in 1:length(Contraintes)
-	
+
 			if (min > length(Contraintes(i)))
-				min = i
+				min = length(Contraintes(i))
 			end
 		end
-		
+
 		for i in 1:length(Contraintes(min))
 			@constraint(m, contrainteSousBoucle[n], sum(x[Contraintes(min, i), Contraintes(min, j)] for j in 1:length(Contraintes(min))
 					if j!=i) <= length(Contraintes(min))-1
 		end
-	
+
 		!push(Contraintes, Contraintes(min))
 	end
-		
+
 end
 
 
@@ -117,20 +117,20 @@ function TSP(C::Array{Int,2})
 
 	# Déclaration d'un modèle (initialement vide)
 	m = Model(solver = GLPKSolverMIP())
-	
+
 	# Nombre de spots
 	n = length(C[1,:])
-	
+
 	# Déclaration des variables
 	@variable(m, x[1:n,1:n], Bin)
 	#Xij = 1 si le drône se rend du lieu i au lieu j ; 0 sinon
-	
+
 	# Déclaration de la fonction objective
 	@objective(m, Min, (sum(C[i,j]*x[i,j] for i in 1:n for j in 1:n)))
-	
+
 	@constraint(m, trajetDestination[i = 1:n], sum(x[i,j] for j in 1:n if j != i) == 1)
 	@constraint(m, trajetSource[j = 1:n], sum(x[i,j] for i in 1:n if i != j) == 1)
-	
+
 	return m
 end
 
@@ -216,7 +216,7 @@ if status == :Optimal
     println("Problème résolu à l'optimalité")
 
     println("z = ",getobjectivevalue(m)) # affichage de la valeur optimale
-    
+
     # affichage des valeurs du vecteur de variables issues du modèle
     println("x = ",getvalue(m[:x]))
 
