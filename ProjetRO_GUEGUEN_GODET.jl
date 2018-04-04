@@ -97,6 +97,8 @@ procedure ajoutContrainte(Contraintes::Array{Array{Int}}, m::JuMP.Model)
 			@constraint(m, contrainteSousBoucle[n], sum(x[Contraintes(min, i), Contraintes(min, j)] for j in 1:length(Contraintes(min))
 					if j!=i) <= length(Contraintes(min))-1
 		end
+	
+		!push(Contraintes, Contraintes(min))
 	end
 		
 end
