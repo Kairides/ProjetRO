@@ -94,7 +94,7 @@ function ajoutContrainte(Contraintes::Array{Array{Int}}, m::JuMP.Model)
 
     cycleFound = Contraintes[min]
 
-    cons = @constraint(m,sum(x[cycleFound[i],cycleFound[(i+1) mod length(cycleFound)]] for i in 1:length(cycleFound)) <= 1)
+    cons = @constraint(m,sum(x[cycleFound[i],cycleFound[(i+1) mod length(cycleFound)]] for i in 1:length(cycleFound)) <= (length(cycleFound)-1))
 
     return 2
 end
