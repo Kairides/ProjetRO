@@ -1,0 +1,1 @@
+La fonction appélée est la fonction main, elle appéle à son tour la fonction scriptTSP et la fonction scriptApprochee appelant réspectivement les fonctions de résolution exacte et résolution approchée pour chaque fichiers de données de plat et relief.
