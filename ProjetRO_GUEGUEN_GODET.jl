@@ -78,25 +78,38 @@ function findCycle(translation::Array{Int})
 	return cycles
 end
 
-
+#= fonction retournant la bonne fonction affine =#
+function createAff(cycleFound::Array{Int}, m::JuMP.Model)
+	x = m[:x]
+	expr = AffExpr()
+	
+	for i in 1:length(cycleFound)
+		push!(expr,1.0,x[cycleFound[i],cycleFound[(i % length(cycleFound))+1]])
+	end
+	
+	return expr
+end
+		
+		
 #= procedure de destruction de sous cycle =#
 #= TODO: verifier le fonctionnement =#
-function ajoutContrainte(Contraintes::Array{Array{Int}}, m::JuMP.Model)
+function ajoutContrainte(cycle::Array{Array{Int}}, m::JuMP.Model)
 
-		min = length(Contraintes[1])
+	min = length(cycle[1])
     x = m[:x]
 
-		for i in 1:length(Contraintes)
-			if (min > length(Contraintes[i]))
-				min = i
-			end
+	for i in 1:length(cycle)
+		if (min > length(cycle[i]))
+			min = i
 		end
+	end
 
-    cycleFound = Contraintes[min]
+    cycleFound = cycle[min]
 
-    cons = @constraint(m,sum(x[cycleFound[i],cycleFound[(i+1) mod length(cycleFound)]] for i in 1:length(cycleFound)) <= (length(cycleFound)-1))
+    #cons = @constraint(m,sum(x[cycleFound[i],cycleFound[(i+1) mod length(cycleFound)]] for i in 1:length(cycleFound)) <= (length(cycleFound)-1))
 
-    return 2
+	expr = createAff(cycleFound, m)
+	@constraint(m, expr <= (length(cycleFound)-1))
 end
 
 
@@ -128,7 +141,40 @@ function TSP(C::Array{Int,2})
 	@constraint(m, trajetDestination[i = 1:n], sum(x[i,j] for j in 1:n if j != i) == 1)
 	@constraint(m, trajetSource[j = 1:n], sum(x[i,j] for i in 1:n if i != j) == 1)
 
-	return m
+
+	#Solvation#
+	
+	status = solve(m)
+	
+	t = findCycle(returnTranslation(m))
+	
+	while length(t) > 1
+		ajoutContrainte(t, m)
+		status = solve(m)
+		t = findCycle(returnTranslation(m))
+	end
+
+
+
+
+	if status == :Optimal
+		println("Problème résolu à l'optimalité")
+
+		println("z = ",getobjectivevalue(m)) # affichage de la valeur optimale
+
+		# affichage des valeurs du vecteur de variables issues du modèle
+		println("x = ",getvalue(m[:x]))
+
+		println("-------\n Avec comme cycle :")
+		println(findCycle(returnTranslation(m)))
+
+	elseif status == :Unbounded
+		println("Problème non-borné")
+
+	elseif status == :Infeasible
+		println("Problème impossible")
+	end
+
 end
 
 
@@ -193,11 +239,11 @@ end
 
 
 
-m = TSP(parseTSP("plat/exemple.dat"))
+m = TSP(parseTSP("relief/relief10.dat"))
 
 
-status = solve(m)
 
+#=
 t = findCycle(returnTranslation(m))
 i = length(t)
 
@@ -207,24 +253,8 @@ while i > 1 && status == :Optimal
 	t = findCycle(returnTranslation(m))
   i = length(t)
 end
+=#
 
 
 
 
-if status == :Optimal
-    println("Problème résolu à l'optimalité")
-
-    println("z = ",getobjectivevalue(m)) # affichage de la valeur optimale
-
-    # affichage des valeurs du vecteur de variables issues du modèle
-    println("x = ",getvalue(m[:x]))
-
-	print(returnTranslation(m))
-	print(findCycle(returnTranslation(m)))
-
-elseif status == :Unbounded
-    println("Problème non-borné")
-
-elseif status == :Infeasible
-    println("Problème impossible")
-end
