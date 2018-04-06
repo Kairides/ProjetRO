@@ -240,12 +240,14 @@ end
 
 #= Construction du cycle de base en prenant comme heuristique le plus proche voisin =#
 function plusProcheVoisin(C::Array{Int,2})
-	cycle = Array{Int}(length(C))
+	cycle = Array{Int}(0)
 
 	#On commence toujours par le premier spot par convention
 	push!(cycle, 1)
 
-	for i in 2:length(C)
+	print("Longueur C[1] : ")
+	println(size(C,1))
+	for i in 2:size(C,1)
 		push!(cycle, spotPlusProche(cycle[i-1], C, cycle))
 	end
 
@@ -258,7 +260,7 @@ function spotPlusProche(numSpot::Int64, C::Array{Int,2}, cycle)
 	minDistance = 10000
 	minSpot = numSpot
 
-	for i in 1:length(C[numSpot])
+	for i in 1:size(C,1)
 		if !(i in cycle)
 			if(C[numSpot,i] < minDistance)
 				minSpot = i
@@ -270,10 +272,15 @@ function spotPlusProche(numSpot::Int64, C::Array{Int,2}, cycle)
 end
 
 function createArrete(cycle::Array{Int})
-	arretes = Array{Array{Int}(2)}(length(cycle))
+	arretes = Array{Array{Int}}(0)
 
 	for i in 1:length(cycle)
-		push!(cycle, [cycle[i],cycle[(i % length(cycle)) + 1]])
+		temporaire = Array{Int}(0)
+
+		push!(temporaire,cycle[i])
+		push!(temporaire,cycle[(i % length(cycle)) + 1])
+		
+		push!(arretes, temporaire)
 	end
 
 	return arretes
@@ -292,10 +299,10 @@ function resolveWith2opt(arrete::Array{Array{Int}}, C::Array{Int,2})
 	while solutionAmelioTrouvee == true
 		solutionAmelioTrouvee = false
 		
-		for a in 1:length(arrete)
+		for a in 1:length(C[1])
 			#On parcours toutes les arrete
 			
-			for b in 1:length(arrete)
+			for b in 1:length(C[1])
 				if (b != (a-1) && b != a && b != (a+1))
 					# a = indice de l'arrete 1
 					# b = indice de l'arrete 2
@@ -315,14 +322,33 @@ function resolveWith2opt(arrete::Array{Array{Int}}, C::Array{Int,2})
 			
 		end
 
-	end				
+	end
+
+	return arrete				
 	 				 
 end
 
 
+#= Résolution approchée =#
+function resolutionApprochee(nomFichier::String)
+	print("Ressources")
+	C = parseTSP(nomFichier)
+	println(C)
 
+	print("Cycle avec plus proche voisins")
+	P = plusProcheVoisin(C)
+	println(P)
 
+	print("Arretes")
+	A = createArrete(P)
+	println(A)
 
+	print("Arretes résolues")
+	println(resolveWith2opt(A,C))
+end
+	
+
+resolutionApprochee("plat/exemple.dat")
 
 
 
