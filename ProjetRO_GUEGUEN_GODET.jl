@@ -385,7 +385,7 @@ end
 
 
 function main()
-	#scriptTSP()
+	scriptTSP()
 	scriptApprochee()
 end
 
