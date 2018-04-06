@@ -152,16 +152,16 @@ function TSP(C::Array{Int,2})
 
 
 
-
+	
 	if status == :Optimal
 		println("Problème résolu à l'optimalité")
 
 		println("z = ",getobjectivevalue(m)) # affichage de la valeur optimale
 
 		# affichage des valeurs du vecteur de variables issues du modèle
-		println("x = ",getvalue(m[:x]))
+		#println("x = ",getvalue(m[:x]))
 
-		println("-------\n Avec comme cycle :")
+		print("Avec comme cycle :")
 		println(findCycle(returnTranslation(m)))
 
 	elseif status == :Unbounded
@@ -185,19 +185,48 @@ function scriptTSP()
     # Série d'exécution avec mesure du temps pour les instances symétriques
     for i in 10:10:150
         file = "plat/plat" * string(i) * ".dat"
+	println("\n------------------\n")
+	println("Instance à résoudre : plat",i,".dat")
         C = parseTSP(file)
-        println("Instance à résoudre : plat",i,".dat")
         @time TSP(C)
     end
 
     # Série d'exécution avec mesure du temps pour les instances asymétriques
     for i in 10:10:150
         file = "relief/relief" * string(i) * ".dat"
+	println("\n------------------\n")
         println("Instance à résoudre : relief",i,".dat")
         C = parseTSP(file)
         @time TSP(C)
     end
 end
+
+
+
+#= Fonction qui résout l'ensemble des instances du projet avec la méthode de résolution approchée,
+   le temps d'exécution de chacune des instances est mesuré =#
+function scriptApprochee()
+    # Première exécution sur l'exemple pour forcer la compilation si elle n'a pas encore été exécutée
+    resolutionApprochee("plat/exemple.dat")
+
+
+    # Série d'exécution avec mesure du temps pour les instances symétriques
+    for i in 10:10:150
+        file = "plat/plat" * string(i) * ".dat"
+	println("\n------------------\n")
+	println("Instance à résoudre : plat",i,".dat")
+        @time resolutionApprochee(file)
+    end
+
+end
+
+
+
+
+
+
+
+
 
 # fonction qui prend en paramètre un fichier contenant un distancier et qui retourne le tableau bidimensionnel correspondant
 
@@ -245,8 +274,6 @@ function plusProcheVoisin(C::Array{Int,2})
 	#On commence toujours par le premier spot par convention
 	push!(cycle, 1)
 
-	print("Longueur C[1] : ")
-	println(size(C,1))
 	for i in 2:size(C,1)
 		push!(cycle, spotPlusProche(cycle[i-1], C, cycle))
 	end
@@ -264,6 +291,7 @@ function spotPlusProche(numSpot::Int64, C::Array{Int,2}, cycle)
 		if !(i in cycle)
 			if(C[numSpot,i] < minDistance)
 				minSpot = i
+				minDistance = C[numSpot,i]
 			end
 		end
 	end
@@ -287,7 +315,7 @@ function createArrete(cycle::Array{Int})
 end
 
 function delta(i::Int64, j::Int64, iprime::Int64, jprime::Int64, C::Array{Int,2})
-	return C[i,jprime] + C[j,jprime] + C[i,j] + C[iprime, jprime]
+	return C[i,jprime] + C[j,jprime] - C[i,j] - C[iprime, jprime]
 end
 
 
@@ -299,22 +327,31 @@ function resolveWith2opt(arrete::Array{Array{Int}}, C::Array{Int,2})
 	while solutionAmelioTrouvee == true
 		solutionAmelioTrouvee = false
 		
-		for a in 1:length(C[1])
+		for a in 1:size(C,1)
 			#On parcours toutes les arrete
 			
-			for b in 1:length(C[1])
-				if (b != (a-1) && b != a && b != (a+1))
+			for b in 1:size(C,1)
+				if (b != (((a + size(C,1)) % size(C,1)) - 1) && (b != a) && b != (((a + size(C,1)) % size(C,1)) + 1))
 					# a = indice de l'arrete 1
 					# b = indice de l'arrete 2
-					i = arrete[a,1]
-					j = arrete[a,2]
-					iprime = arrete[b,1]
-					jprime = arrete[b,2]
+					i = arrete[a][1]
+					j = arrete[a][2]
+					iprime = arrete[b][1]
+					jprime = arrete[b][2]
+
+					#=print("i : ")
+					println(i)
+					print("j : ")
+					println(j)
+					print("iprime : ")
+					println(iprime)
+					print("jprime : ")
+					println(jprime)=#
 				
-					if delta(i, j, iprime, jprime) < 0
+					if delta(i, j, iprime, jprime, C) < 0
 						solutionAmelioTrouve = true
-						arrete[a,2] = iprime
-						arrete[b,1] = j
+						arrete[a][2] = iprime
+						arrete[b][1] = j
 					end
 				end
 				
@@ -331,44 +368,30 @@ end
 
 #= Résolution approchée =#
 function resolutionApprochee(nomFichier::String)
-	print("Ressources")
+	print("Ressources : ")
 	C = parseTSP(nomFichier)
 	println(C)
 
-	print("Cycle avec plus proche voisins")
 	P = plusProcheVoisin(C)
-	println(P)
 
-	print("Arretes")
+	print("Arretes : ")
 	A = createArrete(P)
 	println(A)
 
-	print("Arretes résolues")
+	print("Arretes résolues : ")
 	println(resolveWith2opt(A,C))
 end
-	
-
-resolutionApprochee("plat/exemple.dat")
 
 
 
-
-
-
-#scriptTSP()
-
-
-#=
-t = findCycle(returnTranslation(m))
-i = length(t)
-
-while i > 1 && status == :Optimal
-	status = ajoutContrainte(t, m)
-	solve(m);
-	t = findCycle(returnTranslation(m))
-  i = length(t)
+function main()
+	#scriptTSP()
+	scriptApprochee()
 end
-=#
+
+main()
+
+
 
 
 
