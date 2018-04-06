@@ -1,0 +1,17 @@
+Preuve de l'affirmation en gras :
+
+Nous cherchons à montrer que la solution optimale trouvée pour le problème initiale est une solution optimale pour le problème du voyageur de commerce.
+
+Au cours du déroulement de l'algo, nous résolvons de manière optimale beaucoups de sous-problèmes avec un sous-ensemble de contraintes du problème de départ. Dans la suite de la démonstration, nous utiliserons le terme de "sous-problèmes" pour désigner ces sous-problèmes (qui sont en totalité égaux au problème initial).
+
+	Tout d'abord, remarquons que la région admissible du problème du voyageur du commerce est incluse dans celle des sous-problèmes. En effet, le problème du voyageur de commerce est un sous-problème particulier dans lequel il n'y a qu'un seul cycle. En partant des sous-problèmes de départ acceptant plusieurs cycles, nous rajoutons des contraintes pour réduire ce nombre de cycles et, ce faisant, nous réduisont également la région admissible du problème ; ce, jusqu'à avoir assez de contraintes pour n'avoir plus qu'un seul cycle, la région admissible réduite est alors celle du problème du voyageur du commerce.
+
+	<center>RA(voyageur) inclusouégale RA(sous-problèmes)</center>
+
+	Ensuite, il convient de noter que la valeur optimale des sous-problèmes est toujours infèrieure ou égale (nous sommes en minimisation) à la valeur optimale du problème du voyageur de commerce. Comme dit précédemment, le problème du voyageur de commerce est équivalent aux sous-problèmes, mais avec plus de contraintes : sa solution optiamle ne pourra donc pas avoir de valeur plus petite que celle de sous-problèmes (puisque ceux-ci accepteraient également ladite solution et l'auraient donc comme solution optimale).
+
+	<center>ValeurOptimale(sous-problèmes) <= ValeurOptimale(voyageur)</center>
+
+	A la fin de l'algorithme, nous avons une solution optimale pour les sous-problème. Or, nous avons également une solution admissible pour la problème du voyageur de commerce (puisque nous avons un seul cycle) : comme les valeurs des solutions optimales des sous-problème sont inférieurs ou égale à celle du problème du voyageur de commerce, nous avons donc une solution optimale pour le voyageur (puisque la solution est admissible par le voyageur).
+
+	La solution optimale trouvée pour les sous-problèmes est donc également un solution optimale pour le problème du voyageur de commerce.
