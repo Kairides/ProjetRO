@@ -6,7 +6,10 @@
 using JuMP, GLPKMathProgInterface
 
 
+
 #= Nombreuses autres fonctions à ajouter =#
+
+
 function analyseSolution(m::JuMP.Model)
 	return true
 end
@@ -37,7 +40,7 @@ function findIndice(a::Array{Int}, b::Int)
 	end
 end
 
-
+#= Fonctions retournants des cycles =#
 function findCycle(translation::Array{Int})
 
 	#= Truc à return =#
@@ -92,14 +95,13 @@ end
 		
 		
 #= procedure de destruction de sous cycle =#
-#= TODO: verifier le fonctionnement =#
 function ajoutContrainte(cycle::Array{Array{Int}}, m::JuMP.Model)
 
-	min = length(cycle[1])
-    x = m[:x]
+	min = 1
+    	x = m[:x]
 
 	for i in 1:length(cycle)
-		if (min > length(cycle[i]))
+		if (length(cycle[min]) > length(cycle[i]))
 			min = i
 		end
 	end
@@ -114,14 +116,8 @@ end
 
 
 
-#=
-   .
-   .
-   .
-=#
 
-
-# Fonction de résolution exacte du problème de voyageur de commerce, dont le distancier est passé en paramètre=#
+#= Fonction de résolution exacte du problème de voyageur de commerce, dont le distancier est passé en paramètre =#
 
 function TSP(C::Array{Int,2})
 
@@ -238,9 +234,102 @@ end
 
 
 
+#=--------------------------------------------------------=#
+#= A partir de là : fonctions pour la résoution approchée =#
+#=--------------------------------------------------------=#
 
-m = TSP(parseTSP("relief/relief10.dat"))
+#= Construction du cycle de base en prenant comme heuristique le plus proche voisin =#
+function plusProcheVoisin(C::Array{Int,2})
+	cycle = Array{Int}(length(C))
 
+	#On commence toujours par le premier spot par convention
+	push!(cycle, 1)
+
+	for i in 2:length(C)
+		push!(cycle, spotPlusProche(cycle[i-1], C, cycle))
+	end
+
+	return cycle
+end
+
+#= Recherche le spot le plus proche du Spot numSpot tel que ce spot n'est pas été déjà parcouru =#
+function spotPlusProche(numSpot::Int64, C::Array{Int,2}, cycle)
+	#On met autant que la distance par défaut entre deux spots identiques pour être sûr que l'on trouvera une distance moins grande
+	minDistance = 10000
+	minSpot = numSpot
+
+	for i in 1:length(C[numSpot])
+		if !(i in cycle)
+			if(C[numSpot,i] < minDistance)
+				minSpot = i
+			end
+		end
+	end
+
+	return minSpot
+end
+
+function createArrete(cycle::Array{Int})
+	arretes = Array{Array{Int}(2)}(length(cycle))
+
+	for i in 1:length(cycle)
+		push!(cycle, [cycle[i],cycle[(i % length(cycle)) + 1]])
+	end
+
+	return arretes
+end
+
+function delta(i::Int64, j::Int64, iprime::Int64, jprime::Int64, C::Array{Int,2})
+	return C[i,jprime] + C[j,jprime] + C[i,j] + C[iprime, jprime]
+end
+
+
+#= Modifie le cycle trouvé à partir de l'heuristique du plus proche voisin grâce à l'heuristique 2-opt =#
+function resolveWith2opt(arrete::Array{Array{Int}}, C::Array{Int,2})
+	#On continue jusqu'à ce que l'on ne trouve plus de solution améliorante#
+	solutionAmelioTrouvee = true
+
+	while solutionAmelioTrouvee == true
+		solutionAmelioTrouvee = false
+		
+		for a in 1:length(arrete)
+			#On parcours toutes les arrete
+			
+			for b in 1:length(arrete)
+				if (b != (a-1) && b != a && b != (a+1))
+					# a = indice de l'arrete 1
+					# b = indice de l'arrete 2
+					i = arrete[a,1]
+					j = arrete[a,2]
+					iprime = arrete[b,1]
+					jprime = arrete[b,2]
+				
+					if delta(i, j, iprime, jprime) < 0
+						solutionAmelioTrouve = true
+						arrete[a,2] = iprime
+						arrete[b,1] = j
+					end
+				end
+				
+			end
+			
+		end
+
+	end				
+	 				 
+end
+
+
+
+
+
+
+
+
+
+
+
+#scriptTSP()
 
 
 #=
